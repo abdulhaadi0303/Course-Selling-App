@@ -1,1 +1,1 @@
-Course selling App:
+Course Selling App:
