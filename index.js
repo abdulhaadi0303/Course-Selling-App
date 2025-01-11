@@ -1,11 +1,10 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
-const { UserModel, TodoModel } = require("./db");
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const {z} = require("zod");
 
-const {adminRouter} = require("./routes/userrouters");
+const {adminRouter} = require("./routers/adminrouter");
 const { userRouter } = require("./routers/userrouter");
 
 const JWT_SECRET = "asdfj230sdh2@3%";
