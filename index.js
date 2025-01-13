@@ -10,8 +10,6 @@ const { adminRouter } = require("./routers/adminrouter");
 const { userRouter } = require("./routers/userrouter");
 
 
-const JWT_ADMIN_SECRET = process.env.JWT_ADMIN_PASSWORD;
-const JWT_USER_SECRET = process.env.JWT_USER_PASSWORD;
 const app = express();
 app.use(express.json());
 

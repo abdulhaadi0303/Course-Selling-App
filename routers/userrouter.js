@@ -3,7 +3,8 @@ const { z } = require("zod");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const userRouter = Router();
-const JWT_USER_SECRET = process.env.JWT_USER_PASSWORD;
+const JWT_USER_PASSWORD = process.env.JWT_USER_PASSWORD;
+const { authUser } = require("../middlewares/user.js");
 
 const { UserModel, AdminModel, CourseModel, PurchaseModel } = require("../db.js");
 
@@ -71,7 +72,7 @@ userRouter.post("/signin", async function (req, res) {
         const match = await bcrypt.compare(password, userexist.password);
         if (match) {
             // Generate JWT token
-            const token = jwt.sign({ id: userexist._id },JWT_USER_SECRET);
+            const token = jwt.sign({ id: userexist._id },JWT_USER_PASSWORD);
             return res.json({
                 token: token,
                 message: "Successfully Logged In"
@@ -91,7 +92,7 @@ userRouter.post("/signin", async function (req, res) {
 })
 
 
-userRouter.get("/course", function(req, res) {
+userRouter.get("/course", authUser, function(req, res) {
     res.json({
         message: "Purchased courses endpoint"
     })
