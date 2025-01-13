@@ -1,8 +1,9 @@
 const { Router } = require("express");
 const { z } = require("zod");
-// const jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const userRouter = Router();
+const JWT_USER_SECRET = process.env.JWT_USER_PASSWORD;
 
 const { UserModel, AdminModel, CourseModel, PurchaseModel } = require("../db.js");
 
@@ -53,21 +54,42 @@ userRouter.post("/signup", async function (req, res) {
 });
 
 
-// const User = new Schema({
-//     name: String,
-//     email: { type: String, unique: true },
-//     password: String
-//   });
+userRouter.post("/signin", async function (req, res) {
+    try {
+        // Extract data from body
+        const { email, password } = req.body;
 
-userRouter.post("/signin", async function(req, res) {
+        // Check if user exists
+        const userexist = await UserModel.findOne({ email });
+        if (!userexist) {
+            return res.status(404).json({
+                message: "User with this email does not exist"
+            });
+        }
 
-    //Extract data from body
-    // const { email, password } = req.body;
-
-    // const userexist = await UserModel.findOne({ email });
-
-
+        // Match password using bcrypt
+        const match = await bcrypt.compare(password, userexist.password);
+        if (match) {
+            // Generate JWT token
+            const token = jwt.sign({ id: userexist._id },JWT_USER_SECRET);
+            return res.json({
+                token: token,
+                message: "Successfully Logged In"
+            });
+        } else {
+            return res.status(403).json({
+                message: "Password Mismatch"
+            });
+        }
+    } catch (err) {
+        // Handle internal errors
+        res.status(500).json({
+            message: "Internal Working Error",
+            error: err.message
+        });
+    }
 })
+
 
 userRouter.get("/course", function(req, res) {
     res.json({
