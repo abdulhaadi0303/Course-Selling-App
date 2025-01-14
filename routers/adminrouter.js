@@ -100,7 +100,7 @@ adminRouter.post("/signin", validate(signinSchema), (req, res, next) => {
   })(req, res, next);
 });
 
-// Protected routes
+//Add New Course
 adminRouter.post("/course", ensureAuthenticated, validate(courseSchema), async (req, res) => {
   const AdminId = req.adminId;
   const { title, description, imageUrl, price } = req.body;
@@ -133,14 +133,78 @@ adminRouter.post("/course", ensureAuthenticated, validate(courseSchema), async (
   }
 });
 
+//Update a course 
+adminRouter.put("/course", ensureAuthenticated, validate(courseSchema), async (req, res) => {
+  const AdminId = req.adminId; // Extract AdminId from the authenticated user
+  const { title, description, imageUrl, price, courseId } = req.body;
 
-adminRouter.put("/course", ensureAuthenticated, (req, res) => {
-  res.json({ message: "Course updated successfully" });
+  try {
+    // Check if the course exists with the given ID and belongs to the authenticated admin
+    const existingCourse = await CourseModel.findOne({ _id: courseId, creatorId: AdminId });
+
+    if (!existingCourse) {
+      return res.status(404).json({
+        message: "Course not found or you do not have permission to update this course.",
+      });
+    }
+
+    // Proceed with the update if the course exists
+    const result = await CourseModel.updateOne(
+      { _id: courseId, creatorId: AdminId }, // Filter to ensure the course ID and creator match
+      {
+        title,
+        description,
+        imageUrl,
+        price,
+      }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(400).json({ message: "Course update failed. No changes made." });
+    }
+
+    res.json({
+      message: "Course updated successfully",
+      courseId: courseId,
+    });
+  } catch (err) {
+    // General error handling
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: err.message,
+    });
+  }
 });
 
-adminRouter.get("/course/bulk", ensureAuthenticated, (req, res) => {
-  res.json({ message: "Bulk courses retrieved successfully" });
+
+adminRouter.get("/course/bulk", ensureAuthenticated, async  (req, res) => {
+  const AdminId = req.adminId; // Extract AdminId from the authenticated user
+
+  try {
+
+    //find the admin from its given id 
+    const admin = await AdminModel.findById(AdminId, { name: 1 });
+
+    const courses = await CourseModel.find(
+      {creatorId: AdminId }, 
+    );
+
+    res.json({
+      message: "All Courses of " + admin.name,
+      courses: courses,
+    });
+  } catch (err) {
+    // General error handling
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: err.message,
+    });
+  }
+
 });
+
+
+
 
 module.exports = {
   adminRouter,
