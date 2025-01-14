@@ -19,11 +19,11 @@ const Admin = new Schema({
 
 // Courses schema
 const Course = new Schema({
-  name: { type: String, unique: true },
   title: { type: String, unique: true },
-  creator_id: ObjectId,
-  price: Number,
-  imageUrl: String
+  description: { type: String, unique: true },
+  creatorId: { type: ObjectId, ref: "Admin" }, // Ensure proper reference
+  imageUrl: { type: String },
+  price: { type: Number },
 });
 
 // Purchases schema

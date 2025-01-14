@@ -1,19 +1,17 @@
 const { Router } = require("express");
 const session = require("express-session");
-const { z } = require("zod");
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const bcrypt = require("bcrypt");
-const { AdminModel } = require("../db.js");
-const { ensureAuthenticated } = require("../middlewares/admin.js");
-const { validate, signupSchema, signinSchema } = require("../middlewares/admin.js");
+const { AdminModel, CourseModel } = require("../db.js");
+const { ensureAuthenticated, validate, signupSchema, signinSchema, courseSchema } = require("../middlewares/admin.js");
 
 const adminRouter = Router();
 
 // Configure session middleware
 adminRouter.use(
   session({
-    secret: process.env.SESSION_SECRET || "defaultsecret", // Key for signing cookies
+    secret: process.env.SESSION_SECRET, // Key for signing cookies
     resave: false, // Prevents session resaving if nothing has changed
     saveUninitialized: false, // Prevents creating uninitialized sessions
     cookie: {
@@ -61,8 +59,6 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
-
-
 // Signup route with validation
 adminRouter.post("/signup", validate(signupSchema), async (req, res) => {
   const { email, password, name } = req.body;
@@ -105,8 +101,30 @@ adminRouter.post("/signin", validate(signinSchema), (req, res, next) => {
 });
 
 // Protected routes
-adminRouter.post("/course", ensureAuthenticated, (req, res) => {
-  res.json({ message: "Course created successfully" });
+adminRouter.post("/course", ensureAuthenticated, validate(courseSchema), async (req, res) => {
+  const Id = req.adminId; 
+  const { title, description, imageUrl, price } = req.body;
+
+  try {
+    await CourseModel.create({
+      title,
+      description,
+      creatorId: Id,
+      imageUrl,
+      price,
+    });
+
+    res.json({
+      message: "Course created successfully",
+      courseId: course._id,
+    });
+
+  } catch (err) {
+    // if (err.code === 11000) {
+    //   return res.status(409).json({ message: "Course title or description already exists" });
+    // }
+    res.status(500).json({ message: "Internal Server Error", error: err.message });
+  }
 });
 
 adminRouter.put("/course", ensureAuthenticated, (req, res) => {
