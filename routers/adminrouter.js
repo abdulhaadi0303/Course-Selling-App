@@ -1,10 +1,12 @@
 const { Router } = require("express");
 const session = require("express-session");
+const { z } = require("zod");
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const bcrypt = require("bcrypt");
 const { AdminModel } = require("../db.js");
 const { ensureAuthenticated } = require("../middlewares/admin.js");
+const { validate, signupSchema, signinSchema } = require("../middlewares/admin.js");
 
 const adminRouter = Router();
 
@@ -29,19 +31,16 @@ adminRouter.use(passport.session());
 passport.use(
   new LocalStrategy({ usernameField: "email" }, async (email, password, done) => {
     try {
-      // Find admin by email
       const admin = await AdminModel.findOne({ email });
       if (!admin) {
         return done(null, false, { message: "Invalid email or password" });
       }
 
-      // Validate password
       const isMatch = await bcrypt.compare(password, admin.password);
       if (!isMatch) {
         return done(null, false, { message: "Invalid email or password" });
       }
 
-      // Authentication successful
       return done(null, admin);
     } catch (err) {
       return done(err);
@@ -49,7 +48,6 @@ passport.use(
   })
 );
 
-// Serialize and deserialize user for session management
 passport.serializeUser((admin, done) => {
   done(null, admin._id);
 });
@@ -65,21 +63,17 @@ passport.deserializeUser(async (id, done) => {
 
 
 
-// Signup route
-adminRouter.post("/signup", async (req, res) => {
+// Signup route with validation
+adminRouter.post("/signup", validate(signupSchema), async (req, res) => {
   const { email, password, name } = req.body;
 
   try {
-    // Check if admin already exists
     const adminExists = await AdminModel.findOne({ email });
     if (adminExists) {
       return res.status(409).json({ message: "Admin with this email already exists" });
     }
 
-    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create new admin
     const admin = new AdminModel({ email, password: hashedPassword, name });
     await admin.save();
 
@@ -89,8 +83,8 @@ adminRouter.post("/signup", async (req, res) => {
   }
 });
 
-// Signin route
-adminRouter.post("/signin", (req, res,next) => {
+// Signin route with validation
+adminRouter.post("/signin", validate(signinSchema), (req, res, next) => {
   passport.authenticate("local", (err, admin, info) => {
     if (err) {
       return res.status(500).json({ message: "Internal server error", error: err.message });
@@ -100,7 +94,6 @@ adminRouter.post("/signin", (req, res,next) => {
       return res.status(401).json({ message: info.message });
     }
 
-    // Log the admin in
     req.logIn(admin, (err) => {
       if (err) {
         return res.status(500).json({ message: "Login failed", error: err.message });
@@ -111,17 +104,15 @@ adminRouter.post("/signin", (req, res,next) => {
   })(req, res, next);
 });
 
-// Protected route: Create course
+// Protected routes
 adminRouter.post("/course", ensureAuthenticated, (req, res) => {
   res.json({ message: "Course created successfully" });
 });
 
-// Protected route: Update course
 adminRouter.put("/course", ensureAuthenticated, (req, res) => {
   res.json({ message: "Course updated successfully" });
 });
 
-// Protected route: Get bulk courses
 adminRouter.get("/course/bulk", ensureAuthenticated, (req, res) => {
   res.json({ message: "Bulk courses retrieved successfully" });
 });

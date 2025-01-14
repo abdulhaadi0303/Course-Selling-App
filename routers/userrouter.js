@@ -5,12 +5,11 @@ const bcrypt = require("bcrypt");
 const userRouter = Router();
 const JWT_USER_PASSWORD = process.env.JWT_USER_PASSWORD;
 const { authUser } = require("../middlewares/user.js");
+const { validate, signupSchema, signinSchema } = require("../middlewares/user.js");
 
 const { UserModel, AdminModel, CourseModel, PurchaseModel } = require("../db.js");
 
-
 userRouter.post("/signup", async function (req, res) {
-    console.log("New User Signup request received");
 
     const requiredbody = z.object({
         email: z.string().email().min(6).max(100),

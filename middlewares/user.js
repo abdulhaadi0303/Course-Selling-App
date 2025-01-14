@@ -1,5 +1,7 @@
 const jwt = require("jsonwebtoken");
 
+const { z } = require("zod");
+
 function authUser(req, res, next) {
     const token = req.headers.token;
 
@@ -27,6 +29,44 @@ function authUser(req, res, next) {
     }
 }
 
+
+// Signup schema
+const signupSchema = z.object({
+    email: z.string().email().min(6).max(100),
+    password: z.string().min(5).max(25),
+    name: z.string().min(3).max(50),
+  });
+  
+  // Login schema
+  const signinSchema = z.object({
+    email: z.string().email().min(6).max(100),
+    password: z.string().min(5).max(25),
+  });
+  
+
+// Middleware to validate request body/data
+function validate(schema) {
+  return (req, res, next) => {
+    try {
+      schema.parse(req.body);
+      next();
+    } catch (e) {
+      if (e instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Validation error",
+          errors: e.errors,
+        });
+      }
+      next(e);
+    }
+  };
+}
+
+
+
 module.exports = {
     authUser,
+    validate,
+    signupSchema,
+    signinSchema,
 }
