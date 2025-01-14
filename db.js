@@ -20,7 +20,7 @@ const Admin = new Schema({
 // Courses schema
 const Course = new Schema({
   title: { type: String, unique: true },
-  description: { type: String, unique: true },
+  description: { type: String},
   creatorId: { type: ObjectId, ref: "Admin" }, // Ensure proper reference
   imageUrl: { type: String },
   price: { type: Number },

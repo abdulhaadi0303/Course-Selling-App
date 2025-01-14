@@ -102,14 +102,14 @@ adminRouter.post("/signin", validate(signinSchema), (req, res, next) => {
 
 // Protected routes
 adminRouter.post("/course", ensureAuthenticated, validate(courseSchema), async (req, res) => {
-  const Id = req.adminId; 
+  const AdminId = req.adminId;
   const { title, description, imageUrl, price } = req.body;
 
   try {
-    await CourseModel.create({
+    const course = await CourseModel.create({
       title,
       description,
-      creatorId: Id,
+      creatorId: AdminId,
       imageUrl,
       price,
     });
@@ -120,12 +120,19 @@ adminRouter.post("/course", ensureAuthenticated, validate(courseSchema), async (
     });
 
   } catch (err) {
-    // if (err.code === 11000) {
-    //   return res.status(409).json({ message: "Course title or description already exists" });
-    // }
-    res.status(500).json({ message: "Internal Server Error", error: err.message });
+    if (err.code === 11000 && err.keyPattern && err.keyPattern.title) {
+      return res.status(409).json({
+        message: `A course with the title "${title}" already exists. Please use a unique title.`,
+      });
+    }
+
+    res.status(500).json({
+      message: "Internal Server Error",
+      error: err.message,
+    });
   }
 });
+
 
 adminRouter.put("/course", ensureAuthenticated, (req, res) => {
   res.json({ message: "Course updated successfully" });
