@@ -176,7 +176,7 @@ adminRouter.put("/course", ensureAuthenticated, validate(courseSchema), async (r
   }
 });
 
-
+//Get all courses of a creator
 adminRouter.get("/course/bulk", ensureAuthenticated, async  (req, res) => {
   const AdminId = req.adminId; // Extract AdminId from the authenticated user
 
@@ -202,7 +202,6 @@ adminRouter.get("/course/bulk", ensureAuthenticated, async  (req, res) => {
   }
 
 });
-
 
 
 

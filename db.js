@@ -28,9 +28,9 @@ const Course = new Schema({
 
 // Purchases schema
 const Purchase = new Schema({
-  user_id: ObjectId,
-  course_id: ObjectId,
-  dateofpurchase: Date
+  user_id: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  course_id: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true },
+  dateofpurchase: { type: Date, default: Date.now },
 });
 
 // Models
